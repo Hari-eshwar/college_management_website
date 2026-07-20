@@ -72,7 +72,7 @@ class Attendance(db.Model):
     student_id = db.Column(db.String(20), db.ForeignKey('students.student_id'), nullable=False)
     faculty_id = db.Column(db.String(20), db.ForeignKey('faculty.faculty_id'), nullable=False)
     subject_name = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.Date, default=date.today, nullable=False)
+    date = db.Column(db.Date, default=lambda: date.today(), nullable=False)
     time = db.Column(db.Time, default=lambda: datetime.now().time())
 
     status = db.Column(db.String(20), default='Present')

@@ -21,7 +21,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'smart-attendance-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///smart_attendance.db')
+db_url = os.getenv('DATABASE_URL', 'sqlite:///smart_attendance.db')
+if db_url and db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['SNAPSHOT_FOLDER'] = os.path.join('static', 'snapshots')
@@ -74,10 +77,10 @@ def seed_admin():
             insp = sa.inspect(db.engine)
             cols = [c['name'] for c in insp.get_columns('students')]
             if 'backlog_subjects' not in cols:
-                db.session.execute(db.text('ALTER TABLE students ADD COLUMN backlog_subjects TEXT DEFAULT ""'))
+                db.session.execute(db.text("ALTER TABLE students ADD COLUMN backlog_subjects TEXT DEFAULT ''"))
                 db.session.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning('Migration backlog_subjects skipped: %s', e)
         try:
             insp = sa.inspect(db.engine)
             cols = [c['name'] for c in insp.get_columns('attendance')]
