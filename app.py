@@ -24,8 +24,16 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'smart-attendance-secret-key-
 db_url = os.getenv('DATABASE_URL', 'sqlite:///smart_attendance.db')
 if db_url and db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
+if 'postgresql' in db_url and 'sslmode' not in db_url:
+    db_url += '?sslmode=require' if '?' not in db_url else '&sslmode=require'
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_size': 5,
+    'max_overflow': 2,
+}
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['SNAPSHOT_FOLDER'] = os.path.join('static', 'snapshots')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
