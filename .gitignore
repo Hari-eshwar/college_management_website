@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+env/
+
+# Database
+*.db
+*.sqlite
+
+# Environment
+.env
+firebase/serviceAccountKey.json
+
+# Models
+models/*.h5
+models/*.pkl
+models/training_history.npy
+
+# Datasets
+dataset/*
+
+# Media
+static/snapshots/
+static/uploads/
+
+# Reports
+reports/*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

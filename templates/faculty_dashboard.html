@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Faculty Dashboard{% endblock %}
+{% block page_title %}Faculty Dashboard{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card glass-card p-3"><div class="stat-icon bg-primary"><i class="fas fa-chalkboard"></i></div><div class="stat-info"><h3>{{ stats.total_classes }}</h3><small>Today's Classes</small></div></div></div>
+    <div class="col-md-3"><div class="stat-card glass-card p-3"><div class="stat-icon bg-success"><i class="fas fa-check-circle"></i></div><div class="stat-info"><h3>{{ stats.present_count }}</h3><small>Present Today</small></div></div></div>
+    <div class="col-md-3"><div class="stat-card glass-card p-3"><div class="stat-icon bg-warning"><i class="fas fa-hourglass-half"></i></div><div class="stat-info"><h3>{{ stats.pending_leaves }}</h3><small>Pending Leaves</small></div></div></div>
+</div>
+
+{% if active_session %}
+<div class="alert alert-success d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-video me-2"></i>Active session: <strong>{{ active_session.subject_name }}</strong></span>
+    <a href="{{ url_for('faculty.attendance') }}" class="btn btn-sm btn-success"><i class="fas fa-arrow-right me-1"></i>Go to Attendance</a>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="glass-card p-4">
+            <h5 class="mb-3"><i class="fas fa-clock me-2 text-primary"></i>Today's Classes</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>Subject</th><th>Time</th><th>Room</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for c in classes %}
+                        <tr>
+                            <td><strong>{{ c.subject_name }}</strong><br><small class="text-muted">{{ c.department }} Sem {{ c.semester }} {{ c.section }}</small></td>
+                            <td>{{ c.start_time }} - {{ c.end_time }}</td>
+                            <td>{{ c.room_number }}</td>
+                            <td>
+                                {% if active_session %}
+                                <button class="btn btn-sm btn-outline-primary" disabled><i class="fas fa-check"></i> In Progress</button>
+                                {% else %}
+                                <a href="{{ url_for('faculty.attendance') }}" class="btn btn-sm btn-success"><i class="fas fa-play me-1"></i>Start</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">No classes today</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="glass-card p-4 mt-4">
+            <h5 class="mb-3"><i class="fas fa-chart-simple me-2 text-info"></i>Today's Attendance</h5>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Student</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for a in today_attendance[:10] %}
+                        <tr>
+                            <td>{{ a.student_id }}</td>
+                            <td><span class="badge bg-{{ 'success' if a.status == 'Present' else 'warning' if a.status == 'Late' else 'danger' }}">{{ a.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="2" class="text-center text-muted">No attendance marked today</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="glass-card p-4 mb-4">
+            <h5 class="mb-3"><i class="fas fa-bell me-2 text-danger"></i>Alerts {% if alerts %}<span class="badge bg-danger">{{ alerts|length }}</span>{% endif %}</h5>
+            <div class="alert-list">
+                {% for a in alerts %}
+                <div class="alert-item d-flex justify-content-between align-items-start p-2 border-bottom">
+                    <div><small class="text-muted">{{ a.created_at.strftime('%H:%M') if a.created_at else '' }}</small><p class="mb-0 small">{{ a.message }}</p></div>
+                    <button class="btn btn-sm btn-outline-secondary mark-alert-read" data-id="{{ a.alert_id }}"><i class="fas fa-check"></i></button>
+                </div>
+                {% else %}
+                <p class="text-muted text-center small">No alerts</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="glass-card p-4">
+            <h5 class="mb-3"><i class="fas fa-paper-plane me-2 text-warning"></i>Leave Requests</h5>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Type</th><th>Dates</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for l in leaves %}
+                        <tr>
+                            <td><span class="badge bg-info">{{ l.leave_type }}</span></td>
+                            <td><small>{{ l.from_date.strftime('%d/%m') if l.from_date else '' }} - {{ l.to_date.strftime('%d/%m') if l.to_date else '' }}</small></td>
+                            <td><span class="badge status-{{ l.status|lower }}">{{ l.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center text-muted">No leave requests</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <a href="{{ url_for('faculty.leaves') }}" class="btn btn-sm btn-outline-warning w-100 mt-2"><i class="fas fa-plus me-1"></i>Request Leave</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.mark-alert-read').forEach(btn => {
+    btn.addEventListener('click', function() {
+        fetch('/faculty/alerts/read/' + this.dataset.id, {method: 'POST'})
+        .then(r => r.json()).then(() => { this.closest('.alert-item').remove(); });
+    });
+});
+</script>
+{% endblock %}

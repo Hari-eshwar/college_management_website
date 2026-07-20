@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Add Test Result{% endblock %}
+{% block page_title %}Add Test Result{% endblock %}
+{% block content %}
+<div class="glass-card p-4">
+    <form method="POST" id="resultForm">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label class="form-label">Subject</label>
+                <select class="form-select" name="subject_name" id="subjectSelect" required>
+                    <option value="">Select...</option>
+                    {% for s in subject_list %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Semester</label>
+                <select class="form-select" name="semester" id="semesterSelect" required>
+                    <option value="">Select...</option>
+                    {% for s in semester_list %}
+                    <option value="{{ s }}">Sem {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Section</label>
+                <select class="form-select" name="section" id="sectionSelect" required>
+                    <option value="">Select...</option>
+                    {% for sec in section_list %}
+                    <option value="{{ sec }}">Section {{ sec }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Test Type</label>
+                <select class="form-select" name="test_type" required>
+                    <option value="">Select...</option>
+                    <option value="Test 1">Test 1</option>
+                    <option value="Test 2">Test 2</option>
+                    <option value="Test 3">Test 3</option>
+                    <option value="Semester Exam">Semester Exam</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Total Marks</label>
+                <input type="number" class="form-control" name="total_marks" value="100" min="1" required>
+            </div>
+        </div>
+        <button type="button" id="loadStudentsBtn" class="btn btn-secondary mb-3"><i class="fas fa-users me-1"></i>Load Students</button>
+        <div id="studentsContainer" style="display:none;">
+            <h6 class="mb-3">Enter Marks</h6>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead><tr><th>#</th><th>USN</th><th>Name</th><th>Marks</th></tr></thead>
+                    <tbody id="studentsBody"></tbody>
+                </table>
+            </div>
+            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Publish Results</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('loadStudentsBtn').addEventListener('click', function() {
+    const semester = document.querySelector('[name="semester"]').value;
+    const section = document.querySelector('[name="section"]').value;
+    if (!semester || !section) {
+        alert('Select semester and section first');
+        return;
+    }
+    fetch('/faculty/results/students?' + new URLSearchParams({semester: semester, section: section}))
+    .then(r => r.json())
+    .then(data => {
+        const container = document.getElementById('studentsContainer');
+        const tbody = document.getElementById('studentsBody');
+        tbody.innerHTML = '';
+        if (!data.students || data.students.length === 0) {
+            alert('No students found');
+            return;
+        }
+        container.style.display = 'block';
+        data.students.forEach(function(s, i) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i+1}</td><td>${s.usn || ''}</td><td>${s.name}</td>
+                <td><input type="number" class="form-control form-control-sm" name="marks_${s.student_id}" placeholder="Enter marks" min="0" step="0.5"></td>`;
+            tbody.appendChild(tr);
+        });
+    });
+});
+</script>
+{% endblock %}

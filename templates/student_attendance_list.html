@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Attendance History{% endblock %}
+{% block page_title %}Attendance History{% endblock %}
+{% block content %}
+<div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-history me-2 text-info"></i>All Attendance Records</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Date</th><th>Subject</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.date.strftime('%d-%m-%Y') if r.date else '' }}</td>
+                    <td>{{ r.subject_name }}</td>
+                    <td>{{ r.time }}</td>
+                    <td><span class="badge bg-{{ 'success' if r.status == 'Present' else 'warning' if r.status == 'Late' else 'danger' }}">{{ r.status }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">No records</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <nav>{% if total_pages > 1 %}<ul class="pagination pagination-sm justify-content-center mt-3">{% for p in range(1, total_pages + 1) %}<li class="page-item {{ 'active' if p == page }}"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>{% endfor %}</ul>{% endif %}</nav>
+</div>
+{% endblock %}

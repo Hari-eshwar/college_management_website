@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Mark Attendance{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <h5 class="mb-3"><i class="fas fa-cog me-2 text-secondary"></i>Session Controls</h5>
+            <form id="sessionForm" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-control" id="deptField" value="{{ faculty.department }}" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Semester</label>
+                    <select class="form-select" id="semesterSelect" required>
+                        <option value="">Select...</option>
+                        {% for s in range(1, 9) %}
+                        <option value="{{ s }}">Sem {{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Section</label>
+                    <select class="form-select" id="sectionSelect" required>
+                        <option value="">Select...</option>
+                        {% for sec in ['A','B','C'] %}
+                        <option value="{{ sec }}">Section {{ sec }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Subject</label>
+                    <select class="form-select" id="subjectSelect" required>
+                        <option value="">Select subject...</option>
+                        {% for c in classes %}
+                        <option value="{{ c.subject_name }}">{{ c.subject_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" id="loadStudentsBtn" class="btn btn-primary w-100"><i class="fas fa-users me-2"></i>Load Students</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-12" id="studentsPanel" style="display:none;">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-list me-2 text-success"></i>Students</h5>
+                <div>
+                    <span class="badge bg-info fs-6 me-2" id="totalBadge">0</span>
+                    <button type="button" id="submitAttendance" class="btn btn-success"><i class="fas fa-check me-2"></i>Submit Attendance</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>USN</th>
+                            <th>Name</th>
+                            <th class="text-center">Present</th>
+                            <th class="text-center">Absent</th>
+                            <th class="text-center">Late</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsBody"></tbody>
+                </table>
+            </div>
+            <p class="text-muted text-center mb-0" id="noStudentsMsg">No students match the selected criteria.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('loadStudentsBtn').addEventListener('click', function() {
+    const semester = document.getElementById('semesterSelect').value;
+    const section = document.getElementById('sectionSelect').value;
+    const subject = document.getElementById('subjectSelect').value;
+    if (!semester || !section || !subject) {
+        alert('Please select semester, section, and subject');
+        return;
+    }
+    fetch('/faculty/attendance/students?' + new URLSearchParams({
+        semester: semester, section: section, subject: subject
+    }))
+    .then(r => r.json())
+    .then(data => {
+        const tbody = document.getElementById('studentsBody');
+        const panel = document.getElementById('studentsPanel');
+        const noMsg = document.getElementById('noStudentsMsg');
+        tbody.innerHTML = '';
+        if (!data.students || data.students.length === 0) {
+            panel.style.display = 'block';
+            noMsg.style.display = 'block';
+            document.getElementById('totalBadge').textContent = '0';
+            return;
+        }
+        panel.style.display = 'block';
+        noMsg.style.display = 'none';
+        document.getElementById('totalBadge').textContent = data.students.length;
+        data.students.forEach(function(s, i) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${s.usn || ''}</td>
+                <td>${s.name}</td>
+                <td class="text-center"><input type="radio" name="status_${s.student_id}" value="Present" checked></td>
+                <td class="text-center"><input type="radio" name="status_${s.student_id}" value="Absent"></td>
+                <td class="text-center"><input type="radio" name="status_${s.student_id}" value="Late"></td>
+                <input type="hidden" name="student_id" value="${s.student_id}">
+            `;
+            tbody.appendChild(tr);
+        });
+    });
+});
+
+document.getElementById('submitAttendance').addEventListener('click', function() {
+    const subject = document.getElementById('subjectSelect').value;
+    const rows = document.querySelectorAll('#studentsBody tr');
+    const students = [];
+    rows.forEach(function(row) {
+        const studentId = row.querySelector('input[name="student_id"]').value;
+        const selected = row.querySelector('input[type="radio"]:checked');
+        if (selected) {
+            students.push({student_id: studentId, status: selected.value});
+        }
+    });
+    if (students.length === 0) {
+        alert('No students to mark');
+        return;
+    }
+    fetch('/faculty/attendance/mark', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject_name: subject, students: students})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.marked + ' student(s) marked successfully');
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(e => alert('Error submitting attendance'));
+});
+</script>
+{% endblock %}

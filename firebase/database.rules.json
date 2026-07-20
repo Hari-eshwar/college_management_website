@@ -1,0 +1,54 @@
+{
+  "rules": {
+    "attendance": {
+      ".read": "auth != null && auth.uid === 'admin'",
+      ".write": "auth != null && auth.uid === 'admin'",
+      "$date": {
+        ".indexOn": ["student_id", "faculty_id", "status"],
+        "$student_id": {
+          ".validate": "newData.hasChildren(['student_id', 'faculty_id', 'subject_name', 'date', 'status', 'timestamp'])",
+          "student_id": { ".validate": "newData.isString()" },
+          "faculty_id": { ".validate": "newData.isString()" },
+          "subject_name": { ".validate": "newData.isString()" },
+          "date": { ".validate": "newData.isString()" },
+          "status": { ".validate": "newData.val() === 'Present' || newData.val() === 'Absent' || newData.val() === 'Late'" },
+
+          "$other": { ".validate": false }
+        }
+      }
+    },
+    "students": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid === 'admin'",
+      "$student_id": {
+        ".validate": "newData.hasChildren(['name', 'department', 'semester'])",
+        "name": { ".validate": "newData.isString()" },
+        "department": { ".validate": "newData.isString()" },
+        "semester": { ".validate": "newData.isString()" },
+        "section": { ".validate": "newData.isString()" },
+        "email": { ".validate": "newData.isString()" },
+        "phone": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "alerts": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid === 'admin'",
+      "$alert_id": {
+        ".validate": "newData.hasChildren(['type', 'message', 'timestamp'])",
+        "type": { ".validate": "newData.isString()" },
+        "message": { ".validate": "newData.isString()" },
+        "faculty_id": { ".validate": "newData.isString()" },
+        "timestamp": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "face_images": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid === 'admin'",
+      "$student_id": {
+        ".validate": "newData.isString()"
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Attendance History{% endblock %}
+{% block page_title %}Attendance History{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-filter me-2 text-primary"></i>Filter Sessions</h5>
+    <form method="GET" action="{{ url_for('faculty.attendance_history') }}">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Subject</label>
+                <select name="subject" class="form-select">
+                    <option value="">All Subjects</option>
+                    {% for s in subject_list %}
+                    <option value="{{ s }}" {% if subject_filter == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">From Date</label>
+                <input type="date" name="from" class="form-control" value="{{ date_from or '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To Date</label>
+                <input type="date" name="to" class="form-control" value="{{ date_to or '' }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filter</button>
+                <a href="{{ url_for('faculty.attendance_history') }}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-history me-2 text-info"></i>Past Sessions</h5>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('faculty.attendance_report', format='pdf') }}" class="btn btn-sm btn-outline-danger"><i class="fas fa-file-pdf me-1"></i>PDF</a>
+            <a href="{{ url_for('faculty.attendance_report', format='excel') }}" class="btn btn-sm btn-outline-success"><i class="fas fa-file-excel me-1"></i>Excel</a>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Subject</th><th>Dept / Sem / Sec</th><th>Started</th><th>Ended</th><th>Status</th><th>Present</th><th>Late</th><th>Total</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for s in sessions %}
+                <tr>
+                    <td><strong>{{ s.subject_name }}</strong></td>
+                    <td><small class="text-muted">{{ s.department }} / Sem {{ s.semester }} / {{ s.section }}</small></td>
+                    <td>{{ s.started_at.strftime('%d-%m-%Y %H:%M') if s.started_at else 'N/A' }}</td>
+                    <td>{{ s.ended_at.strftime('%H:%M') if s.ended_at else '--' }}</td>
+                    <td><span class="badge bg-{{ 'success' if s.status == 'completed' else 'warning' }}">{{ s.status }}</span></td>
+                    <td><span class="text-success fw-bold">{{ s.present_count }}</span></td>
+                    <td><span class="text-warning fw-bold">{{ s.late_count }}</span></td>
+                    <td>{{ s.total_students }}</td>
+                    <td>
+                        <a href="{{ url_for('faculty.attendance') }}" class="btn btn-sm btn-outline-primary" title="View Details"><i class="fas fa-eye"></i></a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted">No sessions found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if total_pages > 1 %}
+    <nav>
+        <ul class="pagination pagination-sm justify-content-center mt-3">
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {{ 'active' if p == page }}">
+                <a class="page-link" href="?page={{ p }}&subject={{ subject_filter }}&from={{ date_from }}&to={{ date_to }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

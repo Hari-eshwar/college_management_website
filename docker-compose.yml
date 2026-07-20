@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./dataset:/app/dataset
+      - ./models:/app/models
+      - ./reports:/app/reports
+      - ./static/snapshots:/app/static/snapshots
+      - ./static/uploads:/app/static/uploads
+      - ./smart_attendance.db:/app/smart_attendance.db
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-this-to-a-secure-random-key}
+      - DATABASE_URL=sqlite:///smart_attendance.db
+      - FLASK_ENV=production
+      - SMTP_SERVER=${SMTP_SERVER:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_EMAIL=${SMTP_EMAIL:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - FIREBASE_CONFIG_PATH=firebase/serviceAccountKey.json
+      - FIREBASE_DATABASE_URL=${FIREBASE_DATABASE_URL:-}
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET:-}
+      - TWILIO_SID=${TWILIO_SID:-}
+      - TWILIO_TOKEN=${TWILIO_TOKEN:-}
+      - TWILIO_FROM=${TWILIO_FROM:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+        reservations:
+          memory: 1g

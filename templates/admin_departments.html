@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-building me-2 text-primary"></i>All Departments</h5>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeptModal"><i class="fas fa-plus me-1"></i>Add Department</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>#</th><th>Name</th><th>Code</th><th>Created</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for d in departments %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ d.name }}</strong></td>
+                    <td><code>{{ d.code }}</code></td>
+                    <td>{{ d.created_at.strftime('%Y-%m-%d') if d.created_at else '' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.department_detail', dept_id=d.id) }}" class="btn btn-sm btn-outline-info"><i class="fas fa-eye"></i></a>
+                        <button class="btn btn-sm btn-outline-primary edit-dept" data-id="{{ d.id }}" data-name="{{ d.name }}" data-code="{{ d.code }}"><i class="fas fa-edit"></i></button>
+                        <form method="POST" action="{{ url_for('admin.delete_department', dept_id=d.id) }}" class="d-inline" onsubmit="return confirm('Delete {{ d.name }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted">No departments created yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addDeptModal">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Department</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('admin.add_department') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body row g-3">
+                    <div class="col-6"><label class="form-label">Department Name</label><input type="text" name="name" class="form-control" placeholder="e.g. Computer Science" required></div>
+                    <div class="col-6"><label class="form-label">Code</label><input type="text" name="code" class="form-control" placeholder="e.g. CS" required></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-primary w-100">Create Department</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editDeptModal">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2 text-primary"></i>Edit Department</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="" id="editDeptForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body row g-3">
+                    <div class="col-6"><label class="form-label">Department Name</label><input type="text" name="name" id="edit_dept_name" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label">Code</label><input type="text" name="code" id="edit_dept_code" class="form-control" required></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-primary w-100">Update Department</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.edit-dept').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('edit_dept_name').value = this.dataset.name;
+        document.getElementById('edit_dept_code').value = this.dataset.code;
+        document.getElementById('editDeptForm').action = '/admin/departments/edit/' + this.dataset.id;
+        new bootstrap.Modal(document.getElementById('editDeptModal')).show();
+    });
+});
+</script>
+{% endblock %}

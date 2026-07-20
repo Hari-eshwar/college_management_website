@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}{{ dept.name }}{% endblock %}
+{% block page_title %}{{ dept.name }} ({{ dept.code }}){% endblock %}
+{% block content %}
+<ul class="nav nav-tabs mb-4" id="deptTab">
+    <li class="nav-item"><a class="nav-link active" href="#subjects" data-bs-toggle="tab">Subjects</a></li>
+    <li class="nav-item"><a class="nav-link" href="#sections" data-bs-toggle="tab">Sections</a></li>
+    <li class="nav-item"><a class="nav-link" href="#timetable" data-bs-toggle="tab">Timetable</a></li>
+</ul>
+<div class="tab-content">
+    {# ─── Subjects Tab ─── #}
+    <div class="tab-pane fade show active" id="subjects">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-book me-2 text-primary"></i>Subjects</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSubjectModal"><i class="fas fa-plus me-1"></i>Add Subject</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>ID</th><th>Name</th><th>Sem</th><th>Type</th><th>Hrs/Week</th><th>Credits</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for s in subjects %}
+                        <tr>
+                            <td><code>{{ s.subject_id }}</code></td>
+                            <td>{{ s.subject_name }}</td>
+                            <td>{{ s.semester }}</td>
+                            <td>{% if s.is_lab %}<span class="badge bg-info">Lab</span>{% else %}<span class="badge bg-secondary">Theory</span>{% endif %}</td>
+                            <td>{{ s.hours_per_week }}</td>
+                            <td>{{ s.credits }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.delete_department_subject', dept_id=dept.id, sub_id=s.subject_id) }}" class="d-inline" onsubmit="return confirm('Delete {{ s.subject_name }}?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted">No subjects. Add subjects below.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ─── Sections Tab ─── #}
+    <div class="tab-pane fade" id="sections">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-layer-group me-2 text-info"></i>Sections</h5>
+                <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#addSectionModal"><i class="fas fa-plus me-1"></i>Add Section</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead><tr><th>#</th><th>Semester</th><th>Section</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        {% for sec in sections %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>Sem {{ sec.semester }}</td>
+                            <td><span class="badge bg-secondary">{{ sec.section }}</span></td>
+                            <td>
+                                <a href="{{ url_for('admin.timetable_view', department=dept.name, semester=sec.semester, section=sec.section) }}" class="btn btn-sm btn-outline-success me-1" title="View Timetable"><i class="fas fa-calendar-alt"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_department_section', dept_id=dept.id, sec_id=sec.id) }}" class="d-inline" onsubmit="return confirm('Delete section {{ sec.section }}?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center text-muted">No sections defined. Create sections before generating timetable.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ─── Timetable Tab ─── #}
+    <div class="tab-pane fade" id="timetable">
+        <div class="glass-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2 text-success"></i>Weekly Timetable</h5>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ url_for('admin.generate_timetable', dept_id=dept.id) }}" class="d-inline-flex gap-2 align-items-end">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div><label class="form-label small mb-0">Semester</label>
+                            <select name="semester" class="form-select form-select-sm" required>
+                                <option value="">Select...</option>
+                                {% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+                            </select></div>
+                        <button class="btn btn-success btn-sm"><i class="fas fa-magic me-1"></i>Generate All Sections</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.clear_timetable', dept_id=dept.id) }}" class="d-inline" onsubmit="return confirm('Clear timetable for this department?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-outline-danger btn-sm"><i class="fas fa-trash me-1"></i>Clear</button>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center timetable-table">
+                    <thead class="table-dark">
+                        <tr><th>Time</th>{% for d in days %}<th>{{ d }}</th>{% endfor %}</tr>
+                    </thead>
+                    <tbody>
+                        {% set slot_info = [
+                            ('08:00', '09:00'),
+                            ('09:00', '10:00'),
+                            ('break', '10:00', '10:15'),
+                            ('10:15', '11:15'),
+                            ('11:15', '12:15'),
+                            ('break', '12:15', '12:30'),
+                            ('12:30', '13:30'),
+                            ('13:30', '14:30'),
+                        ] %}
+                        {% for item in slot_info %}
+                        {% if item[0] == 'break' %}
+                        <tr class="table-secondary small">
+                            <td class="fw-bold">{{ item[1] }}-{{ item[2] }}</td>
+                            {% for day in days %}<td><em class="text-muted">Break</em></td>{% endfor %}
+                        </tr>
+                        {% else %}
+                        {% set s_start, s_end = item[0], item[1] %}
+                        <tr>
+                            <td class="fw-bold bg-light">{{ s_start }}-{{ s_end }}</td>
+                            {% for day in days %}
+                            {% set cell = week_timetable[day]|selectattr('start_time', 'equalto', s_start)|first %}
+                            <td>
+                                {% if cell %}
+                                <div class="fw-bold small">{{ cell.subject_name }}</div>
+                                <div class="small text-muted">{{ faculty_names.get(cell.faculty_id, cell.faculty_id) }}</div>
+                                <div class="small"><span class="badge bg-info">{{ cell.semester }}{{ cell.section }}</span></div>
+                                {% else %}
+                                <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ─── Add Subject Modal ─── #}
+<div class="modal fade" id="addSubjectModal">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Subject</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('admin.add_department_subject', dept_id=dept.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body row g-3">
+                    <div class="col-6"><label class="form-label">Subject ID</label><input type="text" name="subject_id" class="form-control" placeholder="e.g. CS201" required></div>
+                    <div class="col-6"><label class="form-label">Subject Name</label><input type="text" name="subject_name" class="form-control" placeholder="e.g. Data Structures" required></div>
+                    <div class="col-4"><label class="form-label">Semester</label><select name="semester" class="form-select">{% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></div>
+                    <div class="col-4"><label class="form-label">Credits</label><input type="number" name="credits" class="form-control" value="4" min="1"></div>
+                    <div class="col-4"><label class="form-label">Hours/Week</label><input type="number" name="hours_per_week" class="form-control" value="4" min="1"></div>
+                    <div class="col-6 d-flex align-items-end pb-2">
+                        <div class="form-check"><input class="form-check-input" type="checkbox" name="is_lab" id="isLab"><label class="form-check-label" for="isLab">Lab Subject</label></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-primary w-100">Add Subject</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# ─── Add Section Modal ─── #}
+<div class="modal fade" id="addSectionModal">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-info"></i>Add Section</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('admin.add_department_section', dept_id=dept.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body row g-3">
+                    <div class="col-6"><label class="form-label">Semester</label><select name="semester" class="form-select">{% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></div>
+                    <div class="col-6"><label class="form-label">Section</label><input type="text" name="section" class="form-control" placeholder="e.g. A" required></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-info w-100">Add Section</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<style>
+.timetable-table td { vertical-align: middle; min-height: 60px; }
+.timetable-table td > div { margin: 2px 0; }
+</style>
+{% endblock %}

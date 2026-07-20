@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}My Timetable{% endblock %}
+{% block page_title %}Weekly Timetable{% endblock %}
+{% block content %}
+<div class="glass-card p-4">
+    <div class="table-responsive">
+        <table class="table table-bordered text-center timetable-table">
+            <thead class="table-dark">
+                <tr><th>Time</th>{% for d in days %}<th>{{ d }}</th>{% endfor %}</tr>
+            </thead>
+            <tbody>
+                {% set slot_info = [
+                    ('08:00', '09:00'),
+                    ('09:00', '10:00'),
+                    ('10:15', '11:15'),
+                    ('11:15', '12:15'),
+                    ('12:30', '13:30'),
+                    ('13:30', '14:30'),
+                ] %}
+                {% for s_start, s_end in slot_info %}
+                <tr>
+                    <td class="fw-bold bg-light">{{ s_start }}-{{ s_end }}</td>
+                    {% for day in days %}
+                    {% set cell = week_timetable[day]|selectattr('start_time', 'equalto', s_start)|first %}
+                    <td>
+                        {% if cell %}
+                        <div class="fw-bold small">{{ cell.subject_name }}</div>
+                        <div class="small text-muted">{{ faculty_names.get(cell.faculty_id, cell.faculty_id) }}</div>
+                        <div class="small text-muted">{{ cell.start_time }}-{{ cell.end_time }}</div>
+                        {% if cell.room_number %}<span class="badge bg-info">{{ cell.room_number }}</span>{% endif %}
+                        {% else %}
+                        <span class="text-muted">--</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<style>
+.timetable-table td { vertical-align: middle; min-height: 50px; }
+.timetable-table td > div { margin: 2px 0; }
+</style>
+{% endblock %}

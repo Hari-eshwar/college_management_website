@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Smart Attendance{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
+</head>
+<body>
+    <div class="app-wrapper">
+        {% if current_user.is_authenticated %}
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="logo">
+                    <i class="fas fa-robot"></i>
+                    <span>Smart AT</span>
+                </a>
+            </div>
+            <div class="sidebar-user">
+                <div class="avatar">{{ current_user.username[0]|upper }}</div>
+                <div class="user-info">
+                    <strong>{{ current_user.username }}</strong>
+                    <span class="role-badge {{ current_user.role }}">{{ current_user.role|upper }}</span>
+                </div>
+            </div>
+            <ul class="sidebar-nav" id="sidebarNav">
+                {% if current_user.role == 'admin' %}
+                <li><a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint and 'admin.dashboard' in request.endpoint }}"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a></li>
+                <li><a href="{{ url_for('admin.students') }}" class="{{ 'active' if request.endpoint and 'admin.students' in request.endpoint }}"><i class="fas fa-user-graduate"></i><span>Students</span></a></li>
+                <li><a href="{{ url_for('admin.promote_students') }}" class="{{ 'active' if request.endpoint and 'admin.promote_students' in request.endpoint }}"><i class="fas fa-arrow-up"></i><span>Promote</span></a></li>
+                <li><a href="{{ url_for('admin.faculty') }}" class="{{ 'active' if request.endpoint and 'admin.faculty' in request.endpoint }}"><i class="fas fa-chalkboard-teacher"></i><span>Faculty</span></a></li>
+                <li><a href="{{ url_for('admin.timetable_view') }}" class="{{ 'active' if request.endpoint and 'admin.timetable_view' in request.endpoint }}"><i class="fas fa-calendar-alt"></i><span>Timetable</span></a></li>
+                <li><a href="{{ url_for('admin.leaves') }}" class="{{ 'active' if request.endpoint and 'admin.leaves' in request.endpoint }}"><i class="fas fa-envelope-open-text"></i><span>Leave Requests</span></a></li>
+                <li><a href="{{ url_for('admin.departments') }}" class="{{ 'active' if request.endpoint and 'admin.departments' in request.endpoint }}"><i class="fas fa-building"></i><span>Departments</span></a></li>
+                <li><a href="{{ url_for('admin.notifications') }}" class="{{ 'active' if request.endpoint and 'admin.notifications' in request.endpoint }}"><i class="fas fa-bell"></i><span>Notifications</span></a></li>
+                <li><a href="{{ url_for('admin.analytics_page') }}" class="{{ 'active' if request.endpoint and 'admin.analytics_page' in request.endpoint }}"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                {% endif %}
+                {% if current_user.role == 'faculty' %}
+                <li><a href="{{ url_for('faculty.dashboard') }}" class="{{ 'active' if request.endpoint and 'faculty.dashboard' in request.endpoint }}"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a></li>
+                <li><a href="{{ url_for('faculty.attendance') }}" class="{{ 'active' if request.endpoint and 'faculty.attendance' in request.endpoint }}"><i class="fas fa-camera"></i><span>Attendance</span></a></li>
+                <li><a href="{{ url_for('faculty.timetable') }}" class="{{ 'active' if request.endpoint and 'faculty.timetable' in request.endpoint }}"><i class="fas fa-calendar-alt"></i><span>Timetable</span></a></li>
+                <li><a href="{{ url_for('faculty.leaves') }}" class="{{ 'active' if request.endpoint and 'faculty.leaves' in request.endpoint }}"><i class="fas fa-paper-plane"></i><span>Leave Requests</span></a></li>
+                <li><a href="{{ url_for('faculty.students') }}" class="{{ 'active' if request.endpoint and 'faculty.students' in request.endpoint }}"><i class="fas fa-user-graduate"></i><span>Students</span></a></li>
+                <li><a href="{{ url_for('faculty.test_results') }}" class="{{ 'active' if request.endpoint and 'faculty.test_results' in request.endpoint }}"><i class="fas fa-file-alt"></i><span>Test Results</span></a></li>
+                {% endif %}
+                {% if current_user.role == 'student' %}
+                <li><a href="{{ url_for('student.portal') }}" class="{{ 'active' if request.endpoint and 'student.portal' in request.endpoint }}"><i class="fas fa-home"></i><span>My Portal</span></a></li>
+                <li><a href="{{ url_for('student.attendance') }}" class="{{ 'active' if request.endpoint and 'student.attendance' in request.endpoint }}"><i class="fas fa-clipboard-list"></i><span>Attendance</span></a></li>
+                <li><a href="{{ url_for('student.timetable') }}" class="{{ 'active' if request.endpoint and 'student.timetable' in request.endpoint }}"><i class="fas fa-calendar-alt"></i><span>Timetable</span></a></li>
+                <li><a href="{{ url_for('student.analytics_page') }}" class="{{ 'active' if request.endpoint and 'student.analytics_page' in request.endpoint }}"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                <li><a href="{{ url_for('student.test_results') }}" class="{{ 'active' if request.endpoint and 'student.test_results' in request.endpoint }}"><i class="fas fa-file-alt"></i><span>Test Results</span></a></li>
+                <li><a href="{{ url_for('student.profile') }}" class="{{ 'active' if request.endpoint and 'student.profile' in request.endpoint }}"><i class="fas fa-user-circle"></i><span>Profile</span></a></li>
+                <li><a href="{{ url_for('student.download_report', format='pdf') }}"><i class="fas fa-download"></i><span>Download Report</span></a></li>
+                {% endif %}
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </nav>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        {% endif %}
+        <main class="main-content" id="mainContent">
+            {% if current_user.is_authenticated %}
+            <header class="topbar">
+                <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+                <div class="topbar-actions">
+                    <button class="btn btn-sm btn-outline-secondary me-2" id="themeToggle"><i class="fas fa-moon"></i></button>
+                    <div class="notification-bell" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notifBadge" style="display:none;">0</span>
+                    </div>
+                    <div class="user-avatar-sm">{{ current_user.username[0]|upper }}</div>
+                </div>
+            </header>
+            {% endif %}
+            <div class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) {
+            const token = csrfMeta.getAttribute('content');
+            document.querySelectorAll('form').forEach(function(f) {
+                const method = (f.method || 'get').toLowerCase();
+                if (method === 'post') {
+                    let hidden = f.querySelector('input[name="csrf_token"]');
+                    if (!hidden) {
+                        hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.name = 'csrf_token';
+                        hidden.value = token;
+                        f.appendChild(hidden);
+                    }
+                }
+            });
+            // Auto-attach CSRF token to all fetch POST/PUT/DELETE requests
+            const origFetch = window.fetch;
+            window.fetch = function(url, opts) {
+                opts = opts || {};
+                const method = (opts.method || 'get').toUpperCase();
+                if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+                    opts.headers = opts.headers || {};
+                    if (!opts.headers['X-CSRFToken'] && !opts.headers['x-csrftoken']) {
+                        opts.headers['X-CSRFToken'] = token;
+                    }
+                }
+                return origFetch.call(this, url, opts);
+            };
+        }
+        const landingToggle = document.getElementById('themeToggleLanding');
+        if (landingToggle) {
+            landingToggle.addEventListener('click', function() {
+                const html = document.documentElement;
+                const theme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', theme);
+                landingToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+        }
+    });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

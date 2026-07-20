@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Leave Requests{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+{% block content %}
+<div class="glass-card p-4">
+    <h5 class="mb-3"><i class="fas fa-envelope-open-text me-2 text-warning"></i>Faculty Leave Requests</h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Faculty</th><th>Department</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for l in leaves %}
+                <tr>
+                    <td>{{ l.leave_id }}</td><td>{{ l.faculty_name or l.faculty_id }}</td><td>{{ l.department }}</td>
+                    <td><span class="badge bg-info">{{ l.leave_type }}</span></td>
+                    <td>{{ l.from_date.strftime('%d-%m-%Y') if l.from_date else '' }}</td>
+                    <td>{{ l.to_date.strftime('%d-%m-%Y') if l.to_date else '' }}</td>
+                    <td><span title="{{ l.reason }}">{{ l.reason[:30] + '...' if l.reason and l.reason|length > 30 else l.reason }}</span></td>
+                    <td>
+                        <span class="badge status-{{ l.status|lower }}">{{ l.status }}</span>
+                        {% if l.admin_remarks %}<br><small class="text-muted">{{ l.admin_remarks }}</small>{% endif %}
+                    </td>
+                    <td>
+                        {% if l.status == 'Pending' %}
+                        <form method="POST" action="{{ url_for('admin.approve_leave', leave_id=l.leave_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="remarks" value="Approved by admin">
+                            <button class="btn btn-sm btn-success"><i class="fas fa-check"></i></button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.reject_leave', leave_id=l.leave_id) }}" class="d-inline" onsubmit="var r=prompt('Rejection reason:');this.querySelector('[name=remarks]').value=r||'Rejected';return true;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="remarks" value="Rejected">
+                            <button class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted small">{{ l.updated_at.strftime('%d-%m-%Y') if l.updated_at else '' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted">No leave requests</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

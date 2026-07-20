@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}My Test Results{% endblock %}
+{% block page_title %}My Test Results{% endblock %}
+{% block content %}
+<div class="glass-card p-4">
+    <h5 class="mb-3"><i class="fas fa-file-alt me-2 text-primary"></i>Test Results</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Test Type</th>
+                    <th>Marks</th>
+                    <th>Grade</th>
+                    <th>Remarks</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ r.subject_name }}</td>
+                    <td>{{ r.test_type }}</td>
+                    <td>{{ r.marks }}/{{ r.total_marks }}</td>
+                    <td><span class="badge bg-{{ 'success' if r.grade in ('A','B') else 'warning' if r.grade in ('C','D') else 'danger' }}">{{ r.grade }}</span></td>
+                    <td>{{ r.remarks or '-' }}</td>
+                    <td>{{ r.created_at.strftime('%Y-%m-%d') if r.created_at else '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">No results published yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

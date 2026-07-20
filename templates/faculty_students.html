@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}My Students{% endblock %}
+{% block page_title %}My Students{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-search me-2 text-primary"></i>Search & Filter</h5>
+    <form method="GET" action="{{ url_for('faculty.students') }}">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Name, USN, or ID..." value="{{ search or '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for s in semester_list %}
+                    <option value="{{ s }}" {% if semester_filter == s %}selected{% endif %}>Sem {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Section</label>
+                <select name="section" class="form-select">
+                    <option value="">All Sections</option>
+                    {% for s in section_list %}
+                    <option value="{{ s }}" {% if section_filter == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Search</button>
+                <a href="{{ url_for('faculty.students') }}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-user-graduate me-2 text-info"></i>Students <span class="badge bg-primary">{{ student_stats|length }}</span></h5>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#facultyAddStudentModal"><i class="fas fa-plus me-1"></i>Add Student</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Name</th><th>USN</th><th>Sem / Sec</th><th>Email</th><th>Phone</th><th>Sessions</th><th>Present</th><th>Attendance %</th></tr>
+            </thead>
+            <tbody>
+                {% for item in student_stats %}
+                <tr>
+                    <td><strong>{{ item.student.name }}</strong></td>
+                    <td><code>{{ item.student.usn }}</code></td>
+                    <td>Sem {{ item.student.semester }} / {{ item.student.section }}</td>
+                    <td><small class="text-muted">{{ item.student.email or '--' }}</small></td>
+                    <td><small class="text-muted">{{ item.student.phone or '--' }}</small></td>
+                    <td>{{ item.total }}</td>
+                    <td>{{ item.present }}</td>
+                    <td>
+                        <div class="progress" style="height:6px;width:80px;">
+                            <div class="progress-bar bg-{{ 'success' if item.percentage >= 75 else 'warning' if item.percentage >= 50 else 'danger' }}" style="width:{{ item.percentage }}%"></div>
+                        </div>
+                        <small class="{{ 'text-success' if item.percentage >= 75 else 'text-warning' if item.percentage >= 50 else 'text-danger' }}">{{ item.percentage }}%</small>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted">No students found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal fade" id="facultyAddStudentModal"><div class="modal-dialog"><div class="modal-content glass-card"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-success"></i>Add Student</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+<form method="POST" action="{{ url_for('faculty.add_student') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-body row g-3">
+        <div class="col-6"><label class="form-label">Student ID</label><input type="text" name="student_id" class="form-control" required></div>
+        <div class="col-6"><label class="form-label">USN</label><input type="text" name="usn" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+        <div class="col-4"><label class="form-label">Semester</label><select name="semester" class="form-select">{% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></div>
+        <div class="col-4"><label class="form-label">Section</label><input type="text" name="section" class="form-control"></div>
+        <div class="col-4"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Face Image</label><input type="file" name="face_image" class="form-control" accept="image/*"></div>
+        <div class="col-12"><div class="alert alert-info small mb-0">Department: <strong>{{ faculty.department }}</strong> | Default password: <code>student_id@123</code></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-success w-100">Add Student</button></div>
+</form></div></div></div>
+{% endblock %}

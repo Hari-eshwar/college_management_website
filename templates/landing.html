@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}AI Smart Attendance System{% endblock %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-transparent position-absolute top-0 start-0 w-100 px-4 py-3" style="z-index:10;">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/"><i class="fas fa-robot me-2 text-primary"></i>Smart AT</a>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-outline-light" id="themeToggleLanding"><i class="fas fa-moon"></i></button>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt me-1"></i>Login</a>
+        </div>
+    </div>
+</nav>
+<section class="hero-section text-center d-flex align-items-center" style="min-height:100vh;">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div>
+    </div>
+    <div class="container position-relative">
+        <div class="glass-card hero-card p-5">
+            <div class="hero-icon mb-4"><i class="fas fa-robot fa-4x text-primary"></i></div>
+            <h1 class="display-4 fw-bold mb-3">AI-Powered Smart Attendance System</h1>
+            <p class="lead text-muted mb-4">Complete classroom management platform with department scheduling, attendance tracking, test results, and real-time analytics.</p>
+            <div class="hero-stats row g-3 mb-4">
+                <div class="col-md-4"><div class="stat-box"><h3 class="text-primary">99.5%</h3><small>Accuracy</small></div></div>
+                <div class="col-md-4"><div class="stat-box"><h3 class="text-primary">Real-time</h3><small>Processing</small></div></div>
+            </div>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-5"><i class="fas fa-sign-in-alt me-2"></i>Get Started</a>
+                <a href="#features" class="btn btn-outline-secondary btn-lg px-5"><i class="fas fa-info-circle me-2"></i>Learn More</a>
+            </div>
+        </div>
+    </div>
+</section>
+<section id="features" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 section-title"><span class="gradient-text">Powerful Features</span></h2>
+            <div class="row g-4">
+                <div class="col-md-4"><div class="feature-card glass-card p-4 text-center"><div class="feature-icon"><i class="fas fa-building fa-3x"></i></div><h4>Department Management</h4><p class="text-muted">Create and manage departments with subjects, sections, and faculty assignments per semester.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card p-4 text-center"><div class="feature-icon"><i class="fas fa-calendar-alt fa-3x"></i></div><h4>Auto Timetable</h4><p class="text-muted">Generate clash-free weekly timetables for all sections with intelligent faculty slot allocation.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card p-4 text-center"><div class="feature-icon"><i class="fas fa-clipboard-check fa-3x"></i></div><h4>Manual Attendance</h4><p class="text-muted">Faculty mark attendance per subject with department/semester/section filters and Present/Absent/Late options.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card p-4 text-center"><div class="feature-icon"><i class="fas fa-chart-line fa-3x"></i></div><h4>Analytics Dashboard</h4><p class="text-muted">Comprehensive insights with attendance trends, student-wise reports, and downloadable reports.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card p-4 text-center"><div class="feature-icon"><i class="fas fa-file-alt fa-3x"></i></div><h4>Test Results</h4><p class="text-muted">Faculty can publish test scores with auto-grading; students view results instantly on their portal.</p></div></div>
+                <div class="col-md-4"><div class="feature-card glass-card p-4 text-center"><div class="feature-icon"><i class="fas fa-bell fa-3x"></i></div><h4>Smart Notifications</h4><p class="text-muted">Automated SMS and email alerts for absences via SendGrid, Vonage, and Twilio integration.</p></div></div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

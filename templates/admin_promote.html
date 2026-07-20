@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Promote Students{% endblock %}
+{% block page_title %}Promote Students{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-arrow-up me-2 text-primary"></i>Select Department & Semester</h5>
+    <form method="GET" action="{{ url_for('admin.promote_students') }}">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Department</label>
+                <select name="department" class="form-select" onchange="this.form.submit()">
+                    <option value="">Select...</option>
+                    {% for d in departments %}
+                    <option value="{{ d.name }}" {% if dept_filter == d.name %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select" onchange="this.form.submit()">
+                    <option value="">Select...</option>
+                    {% for s in semester_list %}
+                    <option value="{{ s }}" {% if sem_filter == s %}selected{% endif %}>Sem {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if dept_filter and sem_filter %}
+<div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-users me-2 text-success"></i>{{ dept_filter }} — Sem {{ sem_filter }}</h5>
+        <button type="button" id="selectAllPromote" class="btn btn-outline-primary btn-sm me-2"><i class="fas fa-check-double me-1"></i>Select All</button>
+    </div>
+    {% if students %}
+    <form method="POST" action="{{ url_for('admin.promote_students') }}" id="promoteForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="department" value="{{ dept_filter }}">
+        <input type="hidden" name="semester" value="{{ sem_filter }}">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="promoteTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width:40px">#</th>
+                        <th>USN</th>
+                        <th>Name</th>
+                        <th>Section</th>
+                        <th>Backlogs</th>
+                        <th class="text-center">Promote</th>
+                        <th class="text-center">Fail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ s.usn }}</td>
+                        <td>{{ s.name }}</td>
+                        <td><span class="badge bg-secondary">{{ s.section }}</span></td>
+                        <td>
+                            {% if s.backlog_subjects %}
+                            <small class="text-warning">{{ s.backlog_subjects }}</small>
+                            {% else %}
+                            <small class="text-muted">--</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" name="promoted" value="{{ s.student_id }}" class="promote-check">
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" name="failed" value="{{ s.student_id }}" class="fail-check">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="submit" class="btn btn-success"><i class="fas fa-arrow-up me-2"></i>Promote Selected</button>
+        </div>
+    </form>
+    {% else %}
+    <div class="alert alert-info">No students in this semester.</div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('selectAllPromote')?.addEventListener('click', function() {
+    document.querySelectorAll('.promote-check').forEach(cb => cb.checked = true);
+    document.querySelectorAll('.fail-check').forEach(cb => cb.checked = false);
+});
+
+// Mutual exclusion: promote and fail can't both be checked
+document.querySelectorAll('.promote-check, .fail-check').forEach(cb => {
+    cb.addEventListener('change', function() {
+        const row = this.closest('tr');
+        if (this.classList.contains('promote-check') && this.checked) {
+            row.querySelector('.fail-check').checked = false;
+        }
+        if (this.classList.contains('fail-check') && this.checked) {
+            row.querySelector('.promote-check').checked = false;
+        }
+    });
+});
+</script>
+{% endblock %}

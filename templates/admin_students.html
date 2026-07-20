@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Manage Students{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fas fa-filter me-2 text-primary"></i>Filter Students</h5>
+    <form method="GET" action="{{ url_for('admin.students') }}">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Name, USN, or ID..." value="{{ search or '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Department</label>
+                <select name="department" class="form-select">
+                    <option value="">All</option>
+                    {% for d in departments %}
+                    <option value="{{ d.name }}" {% if dept_filter == d.name %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All</option>
+                    {% for s in semester_list %}
+                    <option value="{{ s }}" {% if sem_filter == s %}selected{% endif %}>Sem {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Section</label>
+                <select name="section" class="form-select">
+                    <option value="">All</option>
+                    {% for s in section_list %}
+                    <option value="{{ s }}" {% if sec_filter == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Filter</button>
+                <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="glass-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-user-graduate me-2 text-primary"></i>All Students <span class="badge bg-primary">{{ students|length }}</span></h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#bulkImportModal"><i class="fas fa-file-csv me-1"></i>Import CSV</button>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal"><i class="fas fa-plus me-1"></i>Add Student</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover datatable">
+            <thead><tr><th>ID</th><th>USN</th><th>Name</th><th>Department</th><th>Semester</th><th>Section</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td>{{ s.student_id }}</td><td>{{ s.usn }}</td><td>{{ s.name }}</td><td>{{ s.department }}</td>
+                    <td>{{ s.semester }}</td><td>{{ s.section }}</td><td>{{ s.email }}</td><td>{{ s.phone }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-student" data-id="{{ s.student_id }}" data-name="{{ s.name }}" data-usn="{{ s.usn }}" data-dept="{{ s.department }}" data-sem="{{ s.semester }}" data-sec="{{ s.section }}" data-email="{{ s.email }}" data-phone="{{ s.phone }}" data-parent-phone="{{ s.parent_phone }}" data-parent-email="{{ s.parent_email }}"><i class="fas fa-edit"></i></button>
+                        <form method="POST" action="{{ url_for('admin.delete_student', student_id=s.student_id) }}" class="d-inline" onsubmit="return confirm('Delete {{ s.name }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted">No students registered</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal fade" id="bulkImportModal"><div class="modal-dialog"><div class="modal-content glass-card"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-file-csv me-2 text-success"></i>Bulk Import Students</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+<form method="POST" action="{{ url_for('admin.bulk_add_students') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-body">
+        <p class="text-muted small mb-3">Upload a CSV file with columns: <code>student_id, usn, name, department, semester, section, email, phone, parent_phone, parent_email</code></p>
+        <div class="mb-3">
+            <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+        </div>
+        <div class="alert alert-info small mb-0">
+            <strong>Note:</strong> Students with duplicate IDs or USNs will be skipped. Each imported student gets a default password: <code>student_id@123</code>
+        </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-success w-100"><i class="fas fa-upload me-2"></i>Import Students</button></div>
+</form></div></div></div>
+<div class="modal fade" id="addStudentModal"><div class="modal-dialog"><div class="modal-content glass-card"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Student</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+<form method="POST" action="{{ url_for('admin.add_student') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-body row g-3">
+        <div class="col-6"><label class="form-label">Student ID</label><input type="text" name="student_id" class="form-control" required></div>
+        <div class="col-6"><label class="form-label">USN</label><input type="text" name="usn" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+        <div class="col-4"><label class="form-label">Department</label><select name="department" class="form-select">{% for d in departments %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}</select></div>
+        <div class="col-4"><label class="form-label">Semester</label><select name="semester" class="form-select">{% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></div>
+        <div class="col-4"><label class="form-label">Section</label><input type="text" name="section" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Parent Phone</label><input type="text" name="parent_phone" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Parent Email</label><input type="email" name="parent_email" class="form-control"></div>
+        <div class="col-12"><label class="form-label">Face Image</label><input type="file" name="face_image" class="form-control" accept="image/*"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary w-100">Add Student</button></div>
+</form></div></div></div>
+<div class="modal fade" id="editStudentModal"><div class="modal-dialog"><div class="modal-content glass-card"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2 text-primary"></i>Edit Student</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+<form method="POST" action="" id="editStudentForm" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-body row g-3">
+        <div class="col-6"><label class="form-label">Student ID</label><input type="text" id="edit_id" class="form-control" readonly></div>
+        <div class="col-6"><label class="form-label">USN</label><input type="text" id="edit_usn" name="usn" class="form-control" required></div>
+        <div class="col-12"><label class="form-label">Full Name</label><input type="text" id="edit_name" name="name" class="form-control" required></div>
+        <div class="col-4"><label class="form-label">Department</label><select id="edit_dept" name="department" class="form-select">{% for d in departments %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}</select></div>
+        <div class="col-4"><label class="form-label">Semester</label><select id="edit_sem" name="semester" class="form-select">{% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}</select></div>
+        <div class="col-4"><label class="form-label">Section</label><input type="text" id="edit_sec" name="section" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Email</label><input type="email" id="edit_email" name="email" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Phone</label><input type="text" id="edit_phone" name="phone" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Parent Phone</label><input type="text" id="edit_parent_phone" name="parent_phone" class="form-control"></div>
+        <div class="col-6"><label class="form-label">Parent Email</label><input type="email" id="edit_parent_email" name="parent_email" class="form-control"></div>
+        <div class="col-12"><label class="form-label">Face Image</label><input type="file" name="face_image" class="form-control" accept="image/*"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary w-100">Update Student</button></div>
+</form></div></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.edit-student').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('edit_id').value = this.dataset.id;
+        document.getElementById('edit_usn').value = this.dataset.usn;
+        document.getElementById('edit_name').value = this.dataset.name;
+        document.getElementById('edit_dept').value = this.dataset.dept;
+        document.getElementById('edit_sem').value = this.dataset.sem;
+        document.getElementById('edit_sec').value = this.dataset.sec;
+        document.getElementById('edit_email').value = this.dataset.email;
+        document.getElementById('edit_phone').value = this.dataset.phone;
+        document.getElementById('edit_parent_phone').value = this.dataset.parentPhone;
+        document.getElementById('edit_parent_email').value = this.dataset.parentEmail;
+        document.getElementById('editStudentForm').action = '/admin/students/edit/' + this.dataset.id;
+        new bootstrap.Modal(document.getElementById('editStudentModal')).show();
+    });
+});
+</script>
+{% endblock %}

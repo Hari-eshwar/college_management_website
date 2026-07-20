@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}My Analytics{% endblock %}
+{% block page_title %}My Analytics{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3"><div class="stat-card glass-card p-3 text-center"><h3 class="text-success">{{ stats.present }}</h3><small>Present</small></div></div>
+    <div class="col-md-3"><div class="stat-card glass-card p-3 text-center"><h3 class="text-danger">{{ stats.absent }}</h3><small>Absent</small></div></div>
+    <div class="col-md-3"><div class="stat-card glass-card p-3 text-center"><h3 class="text-warning">{{ stats.late }}</h3><small>Late</small></div></div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <h5 class="mb-3"><i class="fas fa-calendar-check me-2 text-success"></i>Attendance by Subject</h5>
+            <div class="chart-container"><canvas id="subjectChart"></canvas></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+
+{% endblock %}

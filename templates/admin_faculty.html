@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Manage Faculty{% endblock %}
+{% block page_title %}Faculty Management{% endblock %}
+{% block content %}
+<div class="glass-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-chalkboard-teacher me-2 text-primary"></i>All Faculty</h5>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFacultyModal"><i class="fas fa-plus me-1"></i>Add Faculty</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Semesters</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for f in faculty %}
+                <tr>
+                    <td><code>{{ f.faculty_id }}</code></td><td>{{ f.name }}</td><td>{{ f.email }}</td><td>{{ f.phone or '--' }}</td>
+                    <td>{{ f.department }}</td>
+                    <td>{% set sems = f.semesters_handled.split(',') if f.semesters_handled else [] %}{% for s in sems %}<span class="badge bg-info me-1">{{ s }}</span>{% else %}<span class="text-muted">--</span>{% endfor %}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-faculty" data-id="{{ f.faculty_id }}" data-name="{{ f.name }}" data-email="{{ f.email }}" data-phone="{{ f.phone or '' }}" data-dept="{{ f.department }}" data-sems="{{ f.semesters_handled }}"><i class="fas fa-edit"></i></button>
+                        <form method="POST" action="{{ url_for('admin.delete_faculty', faculty_id=f.faculty_id) }}" class="d-inline" onsubmit="return confirm('Delete {{ f.name }}?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">No faculty registered</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addFacultyModal">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Faculty</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('admin.add_faculty') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body row g-3">
+                    <div class="col-6"><label class="form-label">Faculty ID</label><input type="text" name="faculty_id" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label">Full Name</label><input type="text" name="name" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label">Email</label><input type="email" name="email" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label">Phone</label><input type="text" name="phone" class="form-control"></div>
+                    <div class="col-12"><label class="form-label">Department</label>
+                        <select name="department" class="form-select">
+                            {% for d in departments %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12"><label class="form-label">Handles Semesters</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for i in range(1,9) %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="semesters" value="{{ i }}" id="add_sem_{{ i }}">
+                                <label class="form-check-label" for="add_sem_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-primary w-100">Add Faculty</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editFacultyModal">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card">
+            <div class="modal-header"><h5 class="modal-title"><i class="fas fa-edit me-2 text-primary"></i>Edit Faculty</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="" id="editFacultyForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body row g-3">
+                    <div class="col-6"><label class="form-label">Faculty ID</label><input type="text" id="edit_id" class="form-control" readonly></div>
+                    <div class="col-6"><label class="form-label">Full Name</label><input type="text" id="edit_name" name="name" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label">Email</label><input type="email" id="edit_email" name="email" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label">Phone</label><input type="text" id="edit_phone" name="phone" class="form-control"></div>
+                    <div class="col-12"><label class="form-label">Department</label>
+                        <select id="edit_dept" name="department" class="form-select">
+                            {% for d in departments %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12"><label class="form-label">Handles Semesters</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for i in range(1,9) %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input edit-sem" type="checkbox" name="semesters" value="{{ i }}" id="edit_sem_{{ i }}">
+                                <label class="form-check-label" for="edit_sem_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-primary w-100">Update Faculty</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.edit-faculty').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.getElementById('edit_id').value = this.dataset.id;
+        document.getElementById('edit_name').value = this.dataset.name;
+        document.getElementById('edit_email').value = this.dataset.email;
+        document.getElementById('edit_phone').value = this.dataset.phone;
+        document.getElementById('edit_dept').value = this.dataset.dept;
+        document.querySelectorAll('.edit-sem').forEach(cb => cb.checked = false);
+        (this.dataset.sems || '').split(',').filter(Boolean).forEach(s => {
+            const cb = document.getElementById('edit_sem_' + s);
+            if (cb) cb.checked = true;
+        });
+        document.getElementById('editFacultyForm').action = '/admin/faculty/edit/' + this.dataset.id;
+        new bootstrap.Modal(document.getElementById('editFacultyModal')).show();
+    });
+});
+</script>
+{% endblock %}
