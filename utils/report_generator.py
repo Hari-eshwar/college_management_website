@@ -51,7 +51,7 @@ tr:nth-child(even) td {{ background: #f9f9f9; }}
 <p class="sub">Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
 {body}
 </body></html>'''
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True) if os.path.dirname(output_path) else None
         wp(string=html).write_pdf(output_path)
         return output_path
 
@@ -136,7 +136,8 @@ tr:nth-child(even) td {{ background: #f9f9f9; }}
                               f'Absent: {absent} ({absent/total*100:.1f}%)' if total else 'Absent: 0',
                               f'Late: {late} ({late/total*100:.1f}%)' if total else 'Late: 0', ''])
         lines.extend(['=' * 50, 'End of Report'])
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        if os.path.dirname(output_path):
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, 'w') as f:
             f.write('\n'.join(lines))
         return output_path

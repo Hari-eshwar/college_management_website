@@ -2,8 +2,10 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
+# libgl1 is the correct package name on Debian Bookworm (python:3.13-slim)
+# libgl1-mesa-glx was removed in Bookworm
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
@@ -25,4 +27,5 @@ EXPOSE 5000
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:5000", "app:app"]
+# Using sync workers (4 workers) — no eventlet monkey_patch required
+CMD ["gunicorn", "-w", "4", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]

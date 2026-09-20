@@ -78,55 +78,56 @@ def health():
     return jsonify({'status': 'healthy', 'timestamp': datetime.now(timezone.utc).isoformat()})
 
 def seed_admin():
-    with app.app_context():
-        db.create_all()
-        import sqlalchemy as sa
-        try:
-            insp = sa.inspect(db.engine)
-            cols = [c['name'] for c in insp.get_columns('students')]
-            if 'backlog_subjects' not in cols:
-                db.session.execute(db.text("ALTER TABLE students ADD COLUMN backlog_subjects TEXT DEFAULT ''"))
-                db.session.commit()
-        except Exception as e:
-            logger.warning('Migration backlog_subjects skipped: %s', e)
-        try:
-            insp = sa.inspect(db.engine)
-            cols = [c['name'] for c in insp.get_columns('attendance')]
-            for col in ['emotion', 'emotion_probability', 'focus_score', 'confidence_score']:
-                if col in cols:
-                    db.session.execute(db.text(f'ALTER TABLE attendance DROP COLUMN {col}'))
-            if any(c in cols for c in ['emotion', 'emotion_probability', 'focus_score', 'confidence_score']):
-                db.session.commit()
-        except Exception:
-            pass
-        if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin', password=generate_password_hash('admin123'),
-                         role='admin', email='admin@smartattendance.com')
-            db.session.add(admin)
+    # NOTE: This function is always called from within an existing app context.
+    # Do NOT wrap with app.app_context() here to avoid a nested context error.
+    db.create_all()
+    import sqlalchemy as sa
+    try:
+        insp = sa.inspect(db.engine)
+        cols = [c['name'] for c in insp.get_columns('students')]
+        if 'backlog_subjects' not in cols:
+            db.session.execute(db.text("ALTER TABLE students ADD COLUMN backlog_subjects TEXT DEFAULT ''"))
             db.session.commit()
-            logger.info('Admin user created (admin/admin123)')
-        if not Faculty.query.filter_by(faculty_id='FAC001').first():
-            demo = Faculty(faculty_id='FAC001', name='Dr. Demo Faculty',
-                           email='faculty@smartattendance.com', phone='9876543210',
-                           department='Computer Science')
-            db.session.add(demo)
-            if not User.query.filter_by(username='faculty').first():
-                u = User(username='faculty', password=generate_password_hash('faculty123'),
-                         role='faculty', email='faculty@smartattendance.com')
-                db.session.add(u)
+    except Exception as e:
+        logger.warning('Migration backlog_subjects skipped: %s', e)
+    try:
+        insp = sa.inspect(db.engine)
+        cols = [c['name'] for c in insp.get_columns('attendance')]
+        for col in ['emotion', 'emotion_probability', 'focus_score', 'confidence_score']:
+            if col in cols:
+                db.session.execute(db.text(f'ALTER TABLE attendance DROP COLUMN {col}'))
+        if any(c in cols for c in ['emotion', 'emotion_probability', 'focus_score', 'confidence_score']):
             db.session.commit()
-            logger.info('Demo faculty created (faculty/faculty123)')
-        if not Student.query.filter_by(student_id='STU001').first():
-            s = Student(student_id='STU001', usn='1BM21CS001', name='Demo Student',
-                        department='Computer Science', semester='5', section='A',
-                        email='student@smartattendance.com', phone='9876543211')
-            db.session.add(s)
-            if not User.query.filter_by(username='student').first():
-                u = User(username='student', password=generate_password_hash('student123'),
-                         role='student', email='student@smartattendance.com')
-                db.session.add(u)
-            db.session.commit()
-            logger.info('Demo student created (student/student123)')
+    except Exception:
+        pass
+    if not User.query.filter_by(username='admin').first():
+        admin = User(username='admin', password=generate_password_hash('admin123'),
+                     role='admin', email='admin@smartattendance.com')
+        db.session.add(admin)
+        db.session.commit()
+        logger.info('Admin user created (admin/admin123)')
+    if not Faculty.query.filter_by(faculty_id='FAC001').first():
+        demo = Faculty(faculty_id='FAC001', name='Dr. Demo Faculty',
+                       email='faculty@smartattendance.com', phone='9876543210',
+                       department='Computer Science')
+        db.session.add(demo)
+        if not User.query.filter_by(username='faculty').first():
+            u = User(username='faculty', password=generate_password_hash('faculty123'),
+                     role='faculty', email='faculty@smartattendance.com')
+            db.session.add(u)
+        db.session.commit()
+        logger.info('Demo faculty created (faculty/faculty123)')
+    if not Student.query.filter_by(student_id='STU001').first():
+        s = Student(student_id='STU001', usn='1BM21CS001', name='Demo Student',
+                    department='Computer Science', semester='5', section='A',
+                    email='student@smartattendance.com', phone='9876543211')
+        db.session.add(s)
+        if not User.query.filter_by(username='student').first():
+            u = User(username='student', password=generate_password_hash('student123'),
+                     role='student', email='student@smartattendance.com')
+            db.session.add(u)
+        db.session.commit()
+        logger.info('Demo student created (student/student123)')
 
 initialize_firebase = firebase_service.initialize()
 if initialize_firebase:
@@ -138,4 +139,5 @@ with app.app_context():
     seed_admin()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=True)
+    _debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=_debug)
